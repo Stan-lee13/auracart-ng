@@ -1,0 +1,67 @@
+project_id = "mnuppunshelyjezumqtr"
+
+[functions.aliexpress-oauth-callback]
+verify_jwt = false
+
+[functions.admin-login]
+verify_jwt = false
+
+[functions.admin-setup]
+verify_jwt = false
+
+[functions.admin-verify]
+verify_jwt = false
+
+[functions.auto-fulfill-order]
+verify_jwt = false
+
+[functions.check-availability]
+verify_jwt = false
+
+[functions.crypto-convert]
+verify_jwt = false
+
+[functions.get-recommendations]
+verify_jwt = false
+
+[functions.import-products]
+verify_jwt = false
+
+[functions.nowpayments-initialize]
+verify_jwt = false
+
+[functions.nowpayments-webhook]
+verify_jwt = false
+
+[functions.paystack-initialize]
+verify_jwt = false
+
+[functions.paystack-verify]
+verify_jwt = false
+
+[functions.search-products]
+verify_jwt = false
+
+[functions.search-suggest]
+verify_jwt = false
+
+[functions.shopify-sync]
+verify_jwt = false
+
+[functions.supplier-operations]
+verify_jwt = false
+
+[functions.sync-inventory]
+verify_jwt = false
+
+[functions.sync-prices]
+verify_jwt = false
+
+[functions.sync-tracking]
+verify_jwt = false
+
+[functions.track-order]
+verify_jwt = false
+
+[functions.update-profile]
+verify_jwt = false

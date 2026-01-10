@@ -1,0 +1,133 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Aura Cart Brand Colors - Light Mode */
+    --background: 42 17% 95%; /* Glacier White #F7F6F2 */
+    --foreground: 0 0% 7%; /* Onyx Black #121212 */
+
+    --card: 40 11% 86%; /* Sea Salt #DAD7C8 with glassmorphic blur */
+    --card-foreground: 0 0% 7%;
+
+    --popover: 42 17% 95%;
+    --popover-foreground: 0 0% 7%;
+
+    --primary: 187 29% 40%; /* Stained Glass #497D85 */
+    --primary-foreground: 42 17% 95%;
+
+    --secondary: 103 8% 34%; /* Rosepine #556F58 */
+    --secondary-foreground: 42 17% 95%;
+
+    --muted: 40 11% 86%;
+    --muted-foreground: 45 5% 35%; /* Ashwood Moss #55594F */
+
+    --accent: 347 13% 57%; /* Cinnamon Slate #7C5C61 */
+    --accent-foreground: 42 17% 95%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 42 17% 95%;
+
+    --border: 35 8% 77%; /* Paris Rain #C4C1B9 */
+    --input: 35 8% 77%;
+    --ring: 187 29% 40%;
+
+    --radius: 1rem;
+
+    /* Aura Cart Brand Specific */
+    --leather-saddle: 18 32% 26%; /* #5B3A29 */
+    --glow-accent: 103 8% 34%; /* Rosepine for glow effects */
+    
+    /* Transitions */
+    --transition-smooth: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-fast: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .dark {
+    /* Aura Cart Brand Colors - Dark Mode */
+    --background: 0 0% 7%; /* Onyx Black #121212 */
+    --foreground: 42 17% 95%; /* Glacier White #F7F6F2 */
+
+    --card: 18 32% 26%; /* Leather Saddle Brown #5B3A29 with translucent glass */
+    --card-foreground: 42 17% 95%;
+
+    --popover: 0 0% 7%;
+    --popover-foreground: 42 17% 95%;
+
+    --primary: 347 13% 57%; /* Cinnamon Slate #7C5C61 */
+    --primary-foreground: 42 17% 95%;
+
+    --secondary: 187 29% 40%; /* Stained Glass #497D85 */
+    --secondary-foreground: 42 17% 95%;
+
+    --muted: 18 32% 26%;
+    --muted-foreground: 40 11% 86%; /* Sea Salt #DAD7C8 */
+
+    --accent: 187 29% 40%;
+    --accent-foreground: 42 17% 95%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 42 17% 95%;
+
+    --border: 18 32% 26%;
+    --input: 18 32% 26%;
+    --ring: 42 17% 95%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border transition-colors;
+  }
+
+  body {
+    @apply bg-background text-foreground font-serif;
+    transition: background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-sans;
+  }
+}
+
+@layer components {
+  /* Glassmorphism Effect */
+  .glass {
+    @apply bg-card/70 backdrop-blur-xl border border-border/50;
+  }
+
+  /* Glow Effect */
+  .glow-primary {
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
+    transition: box-shadow 0.3s ease;
+  }
+
+  .glow-primary:hover {
+    box-shadow: 0 0 30px hsl(var(--primary) / 0.5);
+  }
+
+  /* Hero Button Variant */
+  .btn-hero {
+    @apply bg-primary text-primary-foreground px-8 py-4 rounded-full font-sans font-semibold text-base;
+    @apply hover:scale-105 transition-all duration-300;
+    @apply glow-primary;
+  }
+
+  /* Card Hover Lift */
+  .card-lift {
+    @apply transition-all duration-300 hover:-translate-y-2 hover:shadow-xl;
+  }
+}
+
+@layer utilities {
+  /* Smooth Parallax */
+  .parallax {
+    transform: translateZ(0);
+    will-change: transform;
+  }
+}
