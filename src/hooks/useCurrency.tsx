@@ -71,19 +71,10 @@ export const useCurrency = () => {
       const errorMessage = err instanceof Error ? err.message : 'Currency conversion failed';
       setError(errorMessage);
       
-      // Log to monitoring service in production
-      if (process.env.NODE_ENV === 'production') {
-        // TODO: Log to monitoring service (e.g., Sentry, LogRocket)
-      } else if (process.env.NODE_ENV === 'development') {
+      // Log error silently - don't show toast for conversion errors
+      if (process.env.NODE_ENV === 'development') {
         console.error('Currency conversion error:', errorMessage);
       }
-      
-      // Show user-friendly error
-      toast({
-        title: "Currency Error",
-        description: "Unable to convert currency. Using default price.",
-        variant: "destructive",
-      });
       
       // Return original amount as fallback
       return amount;

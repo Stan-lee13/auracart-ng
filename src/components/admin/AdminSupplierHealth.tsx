@@ -2,11 +2,12 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { RefreshCw, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
+import { RefreshCw, CheckCircle, XCircle, AlertTriangle, ExternalLink } from "lucide-react";
 import { supplierApi } from "@/lib/api/suppliers";
 import { toast } from "sonner";
-import { ALIEXPRESS_APP_KEY, supabase } from "@/integrations/supabase/client";
-import { ExternalLink } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+
+const ALIEXPRESS_APP_KEY = import.meta.env.VITE_ALIEXPRESS_APP_KEY;
 
 interface HealthStatus {
     [key: string]: {

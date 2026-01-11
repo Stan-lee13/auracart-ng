@@ -3,19 +3,13 @@ import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
-export const ALIEXPRESS_APP_KEY = import.meta.env.VITE_ALIEXPRESS_APP_KEY;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   console.error('Missing Supabase credentials. Please check your .env file.');
-  // We can't use toast here as the app hasn't initialized yet
 }
 
-// Ensure we have valid strings to prevent createClient from crashing immediately
-const validUrl = SUPABASE_URL || 'https://mnuppunshelyjezumqtr.supabase.co';
-const validKey = SUPABASE_ANON_KEY || 'sb_publishable_ZLH4qGnHpDFfF2vCz0Fdyw_IMyCPGO5';
-
-export const supabase = createClient<Database>(validUrl, validKey, {
+export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
     storage: localStorage,
     persistSession: true,
