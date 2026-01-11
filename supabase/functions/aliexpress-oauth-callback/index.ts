@@ -43,7 +43,7 @@ Deno.serve(async (req: Request) => {
       if (error) {
         console.error('AliExpress OAuth error:', { error, errorDescription });
         return Response.redirect(
-          `${Deno.env.get('SITE_URL') || 'https://ctjattuedycmgewumqeh.lovableproject.com'}/stanley?oauth_error=${encodeURIComponent(errorDescription || error)}`,
+          `${Deno.env.get('SITE_URL') || 'https://mnuppunshelyjezumqtr.supabase.co'}/stanley?oauth_error=${encodeURIComponent(errorDescription || error)}`,
           302
         );
       }
@@ -114,7 +114,7 @@ Deno.serve(async (req: Request) => {
     if (tokenData.error_response) {
       console.error('Token exchange error:', tokenData.error_response);
       return Response.redirect(
-        `${Deno.env.get('SITE_URL') || 'https://ctjattuedycmgewumqeh.lovableproject.com'}/stanley?oauth_error=${encodeURIComponent(tokenData.error_response.msg || 'Token exchange failed')}`,
+        `${Deno.env.get('SITE_URL') || 'https://mnuppunshelyjezumqtr.supabase.co'}/stanley?oauth_error=${encodeURIComponent(tokenData.error_response.msg || 'Token exchange failed')}`,
         302
       );
     }
@@ -124,7 +124,7 @@ Deno.serve(async (req: Request) => {
     if (!tokenResult?.access_token) {
       console.error('No access token in response');
       return Response.redirect(
-        `${Deno.env.get('SITE_URL') || 'https://ctjattuedycmgewumqeh.lovableproject.com'}/stanley?oauth_error=No access token received`,
+        `${Deno.env.get('SITE_URL') || 'https://mnuppunshelyjezumqtr.supabase.co'}/stanley?oauth_error=No access token received`,
         302
       );
     }
@@ -154,7 +154,7 @@ Deno.serve(async (req: Request) => {
       console.error('Failed to store tokens:', upsertError);
       // Still redirect but with warning
       return Response.redirect(
-        `${Deno.env.get('SITE_URL') || 'https://ctjattuedycmgewumqeh.lovableproject.com'}/stanley?oauth_success=true&oauth_warning=Token storage failed`,
+        `${Deno.env.get('SITE_URL') || 'https://mnuppunshelyjezumqtr.supabase.co'}/stanley?oauth_success=true&oauth_warning=Token storage failed`,
         302
       );
     }
@@ -163,7 +163,7 @@ Deno.serve(async (req: Request) => {
 
     // Redirect to admin with success message
     return Response.redirect(
-      `${Deno.env.get('SITE_URL') || 'https://ctjattuedycmgewumqeh.lovableproject.com'}/stanley?oauth_success=true&supplier=aliexpress`,
+      `${Deno.env.get('SITE_URL') || 'https://mnuppunshelyjezumqtr.supabase.co'}/stanley?oauth_success=true&supplier=aliexpress`,
       302
     );
 
@@ -171,7 +171,7 @@ Deno.serve(async (req: Request) => {
     console.error('OAuth callback error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return Response.redirect(
-      `${Deno.env.get('SITE_URL') || 'https://ctjattuedycmgewumqeh.lovableproject.com'}/stanley?oauth_error=${encodeURIComponent(errorMessage)}`,
+      `${Deno.env.get('SITE_URL') || 'https://mnuppunshelyjezumqtr.supabase.co'}/stanley?oauth_error=${encodeURIComponent(errorMessage)}`,
       302
     );
   }

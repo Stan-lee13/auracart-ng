@@ -57,7 +57,7 @@ export default function AdminSupplierHealth() {
         }
 
         const redirectUri = `${window.location.origin.includes('localhost')
-            ? 'https://ctjattuedycmgewumqeh.supabase.co/functions/v1/aliexpress-oauth-callback'
+            ? 'https://mnuppunshelyjezumqtr.supabase.co/functions/v1/aliexpress-oauth-callback'
             : `${window.location.origin}/api/aliexpress-callback`}`;
 
         // Note: In production you'd want a more robust redirect mechanism, 
