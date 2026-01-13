@@ -100,14 +100,16 @@ Deno.serve(async (req) => {
     let assignRoleAttempted = false;
     let targetUserId: string | null = null;
 
-    const { data: authLookup, error: authLookupError } = await supabase.auth.admin.getUserByEmail(authorizedEmail);
+    // List users and find by email (getUserByEmail doesn't exist in this SDK version)
+    const { data: usersData, error: authLookupError } = await supabase.auth.admin.listUsers();
+    const foundUser = usersData?.users?.find((u: { email?: string }) => u.email?.toLowerCase() === authorizedEmail.toLowerCase()) || null;
 
     if (authLookupError) {
       console.error('AUTH LOOKUP ERROR:', authLookupError);
       authStatusMessage = 'Unable to verify Supabase auth user due to an authentication lookup error.';
-    } else if (authLookup?.user) {
+    } else if (foundUser) {
       authUserExists = true;
-      targetUserId = authLookup.user.id;
+      targetUserId = foundUser.id;
       authStatusMessage = 'Supabase auth user located.';
     }
 
