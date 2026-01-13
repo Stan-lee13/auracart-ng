@@ -1,4 +1,3 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 const corsHeaders = {
@@ -6,7 +5,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-serve(async (req) => {
+Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -83,8 +82,61 @@ serve(async (req) => {
 
       console.log('Creating AliExpress order for:', order.order_number);
 
-      // Generate placeholder order ID - actual AliExpress API integration would go here
-      const supplierOrderId = `AE-${Date.now()}`;
+      // Create AliExpress order using official API
+      const timestamp = Date.now().toString();
+      const orderPayload: Record<string, string> = {
+        app_key: appKey,
+        method: 'aliexpress.trade.order.create',
+        sign_method: 'sha256',
+        timestamp,
+        v: '2.0',
+        access_token: credentialsData.access_token,
+        param_place_order_request: JSON.stringify({
+          order_items: order.items.map((item: any) => ({
+            product_id: item.aliexpress_product_id,
+            sku: item.sku,
+            quantity: item.quantity,
+            price: item.price,
+          })),
+          shipping_address: order.shipping_address,
+          currency: order.currency || 'USD',
+          payment_method: 'CREDIT_CARD',
+        }),
+      };
+
+      // Generate signature
+      const signStr = appSecret +
+        Object.keys(orderPayload)
+          .sort()
+          .map(key => `${key}${orderPayload[key as keyof typeof orderPayload]}`)
+          .join('') +
+        appSecret;
+
+      const encoder = new TextEncoder();
+      const data = encoder.encode(signStr);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const sign = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+
+      orderPayload.sign = sign;
+
+      const response = await fetch('https://api-sg.aliexpress.com/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams(orderPayload).toString(),
+      });
+
+      const responseData = await response.json();
+      if (responseData.error_response) {
+        throw new Error(`AliExpress order creation failed: ${responseData.error_response.msg}`);
+      }
+
+      const orderResult = responseData.aliexpress_trade_order_create_response;
+      if (!orderResult?.order_id) {
+        throw new Error('No order ID returned from AliExpress');
+      }
+
+      const supplierOrderId = orderResult.order_id;
 
       // Update order status
       await supabase

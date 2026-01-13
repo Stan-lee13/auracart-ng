@@ -22,20 +22,20 @@ npx supabase db push
 
 If the CLI doesn't work, manually run each migration file in the Supabase SQL Editor in this order:
 
-#### 1. Add Shopify Columns (Required for Shopify integration)
+#### 1. Add Product Sync Columns (Required for multi-supplier integration)
 
-Open `supabase/migrations/20240521_add_shopify_columns.sql` and run it in the SQL Editor.
+Open `supabase/migrations/20240521_add_product_sync_columns.sql` and run it in the SQL Editor.
 
 **What it does:**
-- Adds `shopify_product_id` column to track Shopify product IDs
-- Adds `shopify_variant_id` column to track Shopify variant IDs
+- Adds `supplier_product_id` column to track supplier product IDs
+- Adds `supplier_variant_id` column to track supplier variant IDs
 - Adds `sync_status` column to track sync state (pending/synced/failed)
 - Adds `last_sync_at` timestamp for sync tracking
 - Creates indexes for performance
 
-#### 2. Setup Shopify Sync Trigger (Required for auto-sync)
+#### 2. Setup Product Sync Trigger (Required for auto-sync)
 
-Open `supabase/migrations/20240522_shopify_sync_trigger.sql` and:
+Open `supabase/migrations/20240522_product_sync_trigger.sql` and:
 
 1. **First, update the service role key:**
    - Find the line with `Authorization": "Bearer YOUR_SERVICE_ROLE_KEY"`
@@ -46,7 +46,7 @@ Open `supabase/migrations/20240522_shopify_sync_trigger.sql` and:
 
 **What it does:**
 - Enables the `pg_net` extension (for HTTP requests)
-- Creates a trigger function that calls the `shopify-sync` Edge Function
+- Creates a trigger function that calls the `sync-products` Edge Function
 - Sets up a trigger on `products` table for INSERT, UPDATE, DELETE operations
 
 ## Verifying Migrations
@@ -126,13 +126,13 @@ Now you can access:
 
 ### Trigger not firing
 
-**Problem:** Products aren't syncing to Shopify
+**Problem:** Products aren't syncing to suppliers
 
 **Solution:**
 1. Check if pg_net is enabled: `SELECT * FROM pg_extension WHERE extname = 'pg_net';`
 2. Verify trigger exists: `SELECT * FROM pg_trigger WHERE tgname = 'on_product_change';`
 3. Check Edge Function logs in Supabase Dashboard
-4. Ensure SHOPIFY_STORE_DOMAIN and SHOPIFY_ACCESS_TOKEN are set in Edge Function secrets
+4. Ensure supplier API credentials are set in Edge Function secrets
 
 ### "Access Denied" on Admin Panel
 
@@ -150,10 +150,10 @@ After completing the database setup:
 
 1. ✅ Database migrations applied
 2. ✅ Admin access configured
-3. 🔲 Deploy Edge Functions (see SHOPIFY_INTEGRATION.md)
+3. 🔲 Deploy Edge Functions (see INTEGRATION_SETUP.md)
 4. 🔲 Configure environment variables
 5. 🔲 Import products
-6. 🔲 Test Shopify sync
+6. 🔲 Test supplier sync
 
 ## Testing the Setup
 
@@ -172,20 +172,20 @@ VALUES (
 );
 
 -- Check if it has sync_status
-SELECT id, title, sync_status, shopify_product_id, last_sync_at
+SELECT id, title, sync_status, supplier_product_id, last_sync_at
 FROM products
 WHERE title = 'Test Product';
 ```
 
 Expected result:
 - sync_status should be 'pending' (or 'synced' if trigger fired and function succeeded)
-- shopify_product_id should be populated after sync completes
+- supplier_product_id should be populated after sync completes
 
 ### Test Admin Access
 
 1. Navigate to http://localhost:8080/admin
-2. You should see the dashboard with tabs: Orders, Inventory, Pricing, Suppliers, Shopify Sync
-3. Click "Shopify Sync" tab to see sync statistics
+2. You should see the dashboard with tabs: Orders, Inventory, Pricing, Suppliers, Sync Status
+3. Click "Sync Status" tab to see sync statistics
 
 ## Support
 

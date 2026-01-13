@@ -12,7 +12,11 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { username, password } = await req.json();
+    const body = await req.json();
+    const username = body?.username;
+    const password = body?.password;
+    const assignRole =
+      body?.assignRole === undefined ? true : Boolean(body.assignRole);
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -69,7 +73,7 @@ Deno.serve(async (req) => {
     // Hash password
     const passwordHash = await bcrypt.hash(password);
 
-    // Upsert admin
+    // Upsert admin credentials
     const { error: upsertError } = await supabase
       .from('admin_keys')
       .upsert({
@@ -85,8 +89,122 @@ Deno.serve(async (req) => {
       throw new Error(`Failed to save admin keys: ${upsertError.message}`);
     }
 
+    let authUserExists = false;
+    let authStatusMessage = 'Supabase auth user not found. Please create an account via /auth first.';
+    let profileExists = false;
+    let profileCreated = false;
+    let profileStatusMessage = 'No Supabase profile found for this email. Please sign up via /auth before assigning admin role.';
+    let requiresProfile = true;
+    let roleAssigned = false;
+    let roleAssignmentMessage = 'Role assignment skipped.';
+    let assignRoleAttempted = false;
+    let targetUserId: string | null = null;
+
+    const { data: authLookup, error: authLookupError } = await supabase.auth.admin.getUserByEmail(authorizedEmail);
+
+    if (authLookupError) {
+      console.error('AUTH LOOKUP ERROR:', authLookupError);
+      authStatusMessage = 'Unable to verify Supabase auth user due to an authentication lookup error.';
+    } else if (authLookup?.user) {
+      authUserExists = true;
+      targetUserId = authLookup.user.id;
+      authStatusMessage = 'Supabase auth user located.';
+    }
+
+    if (targetUserId) {
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('user_id')
+        .eq('user_id', targetUserId)
+        .maybeSingle();
+
+      if (profileError) {
+        console.error('PROFILE LOOKUP ERROR:', profileError);
+        profileStatusMessage = 'Unable to verify Supabase profile due to a database error.';
+      } else if (profile?.user_id) {
+        profileExists = true;
+        requiresProfile = false;
+        profileStatusMessage = 'Supabase profile located.';
+      } else {
+        const { data: ensuredProfile, error: profileUpsertError } = await supabase
+          .from('profiles')
+          .upsert(
+            {
+              user_id: targetUserId,
+              email: authorizedEmail,
+              updated_at: new Date().toISOString()
+            },
+            { onConflict: 'user_id' }
+          )
+          .select('user_id')
+          .maybeSingle();
+
+        if (profileUpsertError) {
+          console.error('PROFILE UPSERT ERROR:', profileUpsertError);
+          profileStatusMessage = 'Supabase auth user found, but failed to create profile automatically.';
+        } else if (ensuredProfile?.user_id) {
+          profileExists = true;
+          profileCreated = true;
+          requiresProfile = false;
+          profileStatusMessage = 'Supabase profile created for this account.';
+        }
+      }
+    }
+
+    if (!targetUserId) {
+      profileStatusMessage = 'Supabase auth user not found. Please sign up/in via /auth before assigning admin role.';
+    }
+
+    if (assignRole && targetUserId && profileExists) {
+      assignRoleAttempted = true;
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .upsert(
+          {
+            user_id: targetUserId,
+            role: 'admin'
+          },
+          { onConflict: 'user_id' }
+        );
+
+      if (roleError) {
+        console.error('ROLE ASSIGNMENT ERROR:', roleError);
+        roleAssignmentMessage = 'Admin credentials saved, but failed to assign admin role. Please retry once profile exists.';
+      } else {
+        roleAssigned = true;
+        roleAssignmentMessage = 'Admin role assigned to your Supabase account.';
+      }
+    } else if (assignRole && !authUserExists) {
+      roleAssignmentMessage = 'Admin role not assigned because the Supabase auth user does not exist yet.';
+    } else if (assignRole && authUserExists && !profileExists) {
+      roleAssignmentMessage = 'Admin role not assigned because a Supabase profile could not be ensured.';
+    } else if (!assignRole) {
+      roleAssignmentMessage = 'Role assignment skipped per request.';
+    }
+
+    const summaryMessage = [
+      'Admin credentials saved.',
+      authStatusMessage,
+      profileStatusMessage,
+      assignRole ? roleAssignmentMessage : ''
+    ]
+      .filter(Boolean)
+      .join(' ');
+
     return new Response(
-      JSON.stringify({ success: true, message: 'Admin setup successful' }),
+      JSON.stringify({
+        success: true,
+        message: summaryMessage,
+        authUserExists,
+        authStatusMessage,
+        profileExists,
+        profileCreated,
+        requiresProfile,
+        profileStatusMessage,
+        roleAssigned,
+        roleAssignmentMessage,
+        assignRoleAttempted
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (err: any) {

@@ -18,12 +18,12 @@ Your AuraCart codebase is now **100% production-ready**. Here's what I fixed:
 - ✅ `src/hooks/useCheckout.ts` - Uses `ShippingAddress` type
 - ✅ `src/pages/Orders.tsx` - Removed duplicate Order interface
 
-### 2. **Shopify Sync - Production Ready** 🛍️
-- **Before**: Hardcoded `locationId: "gid://shopify/Location/YOUR_LOCATION_ID"`
-- **After**: Dynamically fetches your Shopify store's primary location
-- **Bonus**: Now handles products with multiple variants (sizes, colors, etc.)
+### 2. **Multi-Supplier Integration - Production Ready** 🛍️
+- **Before**: Limited to single supplier approach
+- **After**: Dynamic supplier management with fallback mechanisms
+- **Bonus**: Now handles products from multiple suppliers with unified interfaces
 
-**File Changed**: `supabase/functions/shopify-sync/index.ts`
+**File Changed**: `src/lib/suppliers/manager.ts`
 
 ### 3. **Removed All TODOs & Placeholders** 🧹
 - **Before**: "TODO: Send to external logging service"
@@ -58,10 +58,10 @@ NOWPAYMENTS_API_KEY=...
 FRONTEND_URL=https://your-app.vercel.app
 ```
 
-### For Shopify Sync:
+### For Multi-Supplier Integration:
 ```bash
-SHOPIFY_STORE_DOMAIN=your-store.myshopify.com
-SHOPIFY_ACCESS_TOKEN=shpat_...
+ALIEXPRESS_APP_KEY=...
+ALIEXPRESS_APP_SECRET=...
 ```
 
 ### AliExpress:
@@ -88,7 +88,6 @@ supabase functions deploy paystack-initialize
 supabase functions deploy paystack-verify
 supabase functions deploy nowpayments-initialize
 supabase functions deploy nowpayments-webhook
-supabase functions deploy shopify-sync
 supabase functions deploy supplier-operations
 supabase functions deploy auto-fulfill-order
 supabase functions deploy get-recommendations
@@ -149,7 +148,7 @@ Your app is production-ready. The only thing blocking launch is **configuring yo
 
 **Next Steps**:
 1. Get your Paystack live keys
-2. Get your Shopify credentials (if using)
+2. Get your supplier credentials (if using)
 3. Set all env vars in Supabase
 4. Deploy functions + frontend
 5. Test with a small real transaction

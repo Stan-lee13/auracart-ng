@@ -17,7 +17,6 @@ export interface ProductVariant {
   option2?: string; // e.g. Color
   option3?: string; // e.g. Material
   image_id?: string;
-  shopify_variant_id?: string;
 }
 
 export interface Product {
@@ -44,8 +43,7 @@ export interface Product {
   discount_percentage?: number;
   trending_score?: number;
   ai_recommended?: boolean;
-  shopify_product_id?: string;
-  shopify_variant_id?: string;
+
 }
 
 export interface ShippingAddress {

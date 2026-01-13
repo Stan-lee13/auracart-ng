@@ -17,7 +17,7 @@
 - [ ] **Admin role management** system in place
 
 ### Edge Functions
-- [ ] All functions deployed: `paystack-initialize`, `paystack-verify`, `nowpayments-initialize`, `nowpayments-webhook`, `supplier-operations`, `auto-fulfill-order`, `get-recommendations`, `shopify-sync` (new)
+- [ ] All functions deployed: `paystack-initialize`, `paystack-verify`, `nowpayments-initialize`, `nowpayments-webhook`, `supplier-operations`, `auto-fulfill-order`, `get-recommendations`, `sync-inventory` (new)
 - [ ] **Environment variables** set in Supabase Dashboard
 - [ ] **Error logging** configured (consider Sentry integration)
 - [ ] **Function timeouts** appropriate for each task
@@ -28,7 +28,7 @@
 ### API Keys & Secrets
 - [ ] **All API keys** stored in Supabase Edge Function secrets (never in frontend)
 - [ ] **Service role key** never exposed to frontend
-- [ ] **Webhook signatures** validated (Paystack, NowPayments, Shopify)
+- [ ] **Webhook signatures** validated (Paystack, NowPayments, AliExpress)
 - [ ] **Input validation** on all user inputs
 - [ ] **SQL injection protection** (using Supabase client prevents this)
 
@@ -63,19 +63,19 @@
 - [ ] **Error handling** for failed orders
 - [ ] **Retry logic** for transient failures
 
-## ✅ Shopify Integration (NEW)
+## ✅ Multi-Supplier Integration (NEW)
 
 ### Configuration
-- [ ] **Shopify store** created
-- [ ] **Private app** created with Admin API access
-- [ ] **Access token** configured with required scopes: `read_products`, `write_products`, `read_inventory`, `write_inventory`
-- [ ] **Webhook endpoints** registered: `products/update`, `products/delete`
-- [ ] **Mapping table** created in database
+- [ ] **Supplier accounts** created
+- [ ] **API credentials** configured for each supplier
+- [ ] **Access tokens** configured with required scopes
+- [ ] **Rate limiting** handled per supplier API limits
+- [ ] **Fallback mechanisms** implemented for supplier failures
 
 ### Sync Logic
-- [ ] **Initial bulk sync** tested (AuraCart → Shopify)
+- [ ] **Initial bulk sync** tested from multiple suppliers
 - [ ] **Real-time updates** working (create, update, delete)
-- [ ] **Rate limiting** handled (Shopify has 2 req/sec limit)
+- [ ] **Rate limiting** handled per supplier API limits
 - [ ] **Queue system** implemented for batch updates
 - [ ] **Conflict resolution** strategy defined
 
@@ -119,7 +119,7 @@
 - [ ] **Inventory monitoring**
 - [ ] **Supplier health** dashboard
 - [ ] **Sales analytics** (revenue, orders, users)
-- [ ] **Shopify sync status** dashboard
+- [ ] **Supplier health** dashboard
 
 ## ✅ Monitoring & Logging
 
@@ -229,7 +229,7 @@
 1. ❌ **Supplier API keys** - Without these, product import won't work
 2. ❌ **Payment API keys** (production) - Using test keys currently
 3. ❌ **Products in database** - Run import or manually insert test data
-4. ❌ **Shopify integration** - Not yet implemented
+4. ⚠️ **Supplier integration** - Basic implemented, needs optimization
 
 ### Important (Needed Soon):
 1. ⚠️ **Email service** - Order confirmations

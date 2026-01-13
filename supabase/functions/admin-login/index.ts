@@ -1,13 +1,10 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
-import { create } from "https://deno.land/x/djwt@v2.8/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
-
-const JWT_SECRET = Deno.env.get('JWT_SECRET') || 'temporary-secret-key-replace-me';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -39,9 +36,9 @@ Deno.serve(async (req) => {
 
     const { data: adminData, error: dbError } = await supabase
       .from('admin_keys')
-      .select('*')
+      .select('username, password_hash')
       .eq('username', username.toLowerCase())
-      .single();
+      .maybeSingle();
 
     if (dbError || !adminData) {
       console.error('LOGIN ERROR: Admin not found', username);
@@ -61,37 +58,57 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Double check authorized email
-    if (adminData.username.toLowerCase() !== 'stanleyvic13@gmail.com') {
+    const authorizedEmail = 'stanleyvic13@gmail.com';
+    if (adminData.username.toLowerCase() !== authorizedEmail) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized email access.' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Create JWT token
-    const key = await crypto.subtle.importKey(
-      "raw",
-      new TextEncoder().encode(JWT_SECRET),
-      { name: "HMAC", hash: "SHA-256" },
-      false,
-      ["sign", "verify"]
-    );
+    let roleAssigned = false;
+    let roleAssignmentMessage = 'Admin credentials verified. Please sign in with your Supabase account.';
 
-    const token = await create(
-      { alg: "HS256", typ: "JWT" },
-      {
-        username: adminData.username,
-        exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24) // 24 hours
-      },
-      key
-    );
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('user_id')
+      .eq('email', authorizedEmail)
+      .maybeSingle();
+
+    if (profileError) {
+      console.error('PROFILE LOOKUP ERROR:', profileError);
+    }
+
+    if (profile?.user_id) {
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .upsert(
+          {
+            user_id: profile.user_id,
+            role: 'admin'
+          },
+          {
+            onConflict: 'user_id'
+          }
+        );
+
+      if (roleError) {
+        console.error('ROLE ASSIGNMENT ERROR:', roleError);
+        roleAssignmentMessage = 'Credentials verified, but failed to assign admin role. Please try again.';
+      } else {
+        roleAssigned = true;
+        roleAssignmentMessage = 'Admin access confirmed. Your Supabase account now has admin role.';
+      }
+    } else {
+      roleAssignmentMessage = 'Credentials verified, but no Supabase profile found for this email. Please sign up via /auth first.';
+    }
 
     return new Response(
       JSON.stringify({
         success: true,
-        token,
-        username: adminData.username
+        username: adminData.username,
+        roleAssigned,
+        message: roleAssignmentMessage
       }),
       {
         headers: {

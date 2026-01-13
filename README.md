@@ -6,7 +6,6 @@ AuraCart is a modern e-commerce platform with:
 - ✅ **Multiple Payment Methods**: Paystack (Cards/Bank) & Cryptocurrency (USDT, BTC, ETH)
 - ✅ **AliExpress Integration**: Official AliExpress API support
 - ✅ **Automated Order Fulfillment**: Server-side order processing
-- ✅ **Shopify Sync**: AuraCart as source of truth, syncs to Shopify automatically
 - ✅ **AI-Powered Recommendations**: Similar products suggestion
 - ✅ **Admin Dashboard**: Order management, inventory, pricing, supplier health
 - ✅ **Secure Checkout**: Server-side price calculation, webhooks validation
@@ -40,11 +39,6 @@ Follow the instructions in `DATABASE_SETUP.md` to:
 - Apply database migrations
 - Set up admin access
 - Configure triggers
-
-**Quick version:**
-1. Go to Supabase SQL Editor
-2. Run `supabase/migrations/20240521_add_shopify_columns.sql`
-3. Run `supabase/migrations/20240522_shopify_sync_trigger.sql` (update service role key first)
 
 ### 4. Set Up Admin Access
 
@@ -109,11 +103,9 @@ auracart-ng-main/
 │   │   ├── nowpayments-initialize/
 │   │   ├── supplier-operations/
 │   │   ├── auto-fulfill-order/
-│   │   ├── shopify-sync/
 │   │   └── get-recommendations/
 │   └── migrations/         # SQL migrations
 ├── PRODUCTION_CHECKLIST.md
-├── SHOPIFY_INTEGRATION.md
 ├── DATABASE_SETUP.md
 └── .env.example
 ```
@@ -138,7 +130,6 @@ Located in: `src/pages/Checkout.tsx`, `src/hooks/useCheckout.ts`
 - Monitor inventory
 - Adjust pricing
 - Check supplier health
-- Monitor Shopify sync status
 
 **Product Import** (`src/pages/AdminImport.tsx`):
 - Search products from suppliers
@@ -158,20 +149,6 @@ Located in: `src/lib/suppliers/`
 - Product search
 - Order creation
 - Tracking
-
-### 4. Shopify Sync
-
-**How it works:**
-1. Product changed in AuraCart (INSERT/UPDATE/DELETE)
-2. Database trigger fires
-3. Calls `shopify-sync` Edge Function
-4. Syncs to Shopify via Admin API
-5. Updates AuraCart with Shopify IDs
-
-**Admin Monitoring:**
-- View sync status
-- See pending/failed syncs
-- Manually trigger sync
 
 ### 5. AI Recommendations
 
@@ -203,7 +180,6 @@ All backend logic runs in Supabase Edge Functions (Deno runtime):
 - `sync-inventory` - Sync inventory from suppliers
 
 ### Integration Functions
-- `shopify-sync` - Sync products to Shopify
 - `get-recommendations` - AI-powered product recommendations
 
 ### Import Functions
@@ -237,7 +213,6 @@ npm run test
 - [ ] Login with admin credentials
 - [ ] View orders list
 - [ ] Monitor supplier health
-- [ ] Check Shopify sync status
 - [ ] Import products
 
 **Payments:**
@@ -268,7 +243,6 @@ npx supabase functions deploy paystack-initialize
 npx supabase functions deploy nowpayments-initialize
 npx supabase functions deploy supplier-operations
 npx supabase functions deploy auto-fulfill-order
-npx supabase functions deploy shopify-sync
 npx supabase functions deploy get-recommendations
 ```
 
@@ -295,7 +269,6 @@ See `.env.example` for complete list. Key variables:
 - AliExpress API key
 
 **Optional:**
-- Shopify credentials (for sync feature)
 - Klaviyo API key (for marketing)
 - Yotpo credentials (for reviews)
 
@@ -311,13 +284,6 @@ See `.env.example` for complete list. Key variables:
 ### Admin access denied
 **Cause:** User not in `user_roles` table
 **Solution:** Run the INSERT query in DATABASE_SETUP.md with your user ID
-
-### Shopify sync not working
-**Cause:** Missing environment variables or trigger not set up
-**Solution:**
-1. Check `SHOPIFY_STORE_DOMAIN` and `SHOPIFY_ACCESS_TOKEN` are set
-2. Verify trigger exists (see DATABASE_SETUP.md)
-3. Check Edge Function logs
 
 ### Payment failing
 **Cause:** Using test keys or webhook not configured
@@ -339,14 +305,12 @@ After initial setup:
 
 1. **Import Products**: Use admin panel to import from suppliers
 2. **Configure Payments**: Set up Paystack and NowPayments webhooks
-3. **Set Up Shopify**: Follow SHOPIFY_INTEGRATION.md
-4. **Optimize**: Review PRODUCTION_CHECKLIST.md
-5. **Deploy**: Push to production
+3. **Optimize**: Review PRODUCTION_CHECKLIST.md
+4. **Deploy**: Push to production
 
 ## Support & Documentation
 
 - **Production Checklist**: `PRODUCTION_CHECKLIST.md`
-- **Shopify Integration**: `SHOPIFY_INTEGRATION.md`
 - **Database Setup**: `DATABASE_SETUP.md`
 - **Environment Variables**: `.env.example`
 
@@ -359,7 +323,6 @@ After initial setup:
 - **Testing**: Vitest
 - **Payments**: Paystack, NowPayments
 - **Suppliers**: AliExpress
-- **Integrations**: Shopify Admin API
 
 ## License
 

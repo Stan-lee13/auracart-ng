@@ -45,9 +45,6 @@ verify_jwt = false
 [functions.search-suggest]
 verify_jwt = false
 
-[functions.shopify-sync]
-verify_jwt = false
-
 [functions.supplier-operations]
 verify_jwt = false
 

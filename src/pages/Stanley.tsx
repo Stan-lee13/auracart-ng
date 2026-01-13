@@ -14,7 +14,6 @@ import { AdminOrders } from '@/components/admin/AdminOrders';
 import { AdminInventory } from '@/components/admin/AdminInventory';
 import { AdminPricing } from '@/components/admin/AdminPricing';
 import AdminSupplierHealth from '@/components/admin/AdminSupplierHealth';
-import AdminShopifySync from '@/components/admin/AdminShopifySync';
 
 import { Order } from '@/lib/types';
 
@@ -34,15 +33,6 @@ export default function Stanley() {
 
   useEffect(() => {
     const checkAdminStatus = async () => {
-      // Check for custom admin token first
-      const customToken = localStorage.getItem('admin_token');
-      if (customToken) {
-        setIsAdmin(true);
-        setLoading(false);
-        fetchAdminData();
-        return;
-      }
-
       if (!user) {
         navigate('/stanley/login');
         return;
@@ -153,7 +143,6 @@ export default function Stanley() {
               <TabsTrigger value="inventory">Inventory</TabsTrigger>
               <TabsTrigger value="pricing">Pricing</TabsTrigger>
               <TabsTrigger value="suppliers">Suppliers</TabsTrigger>
-              <TabsTrigger value="shopify">Shopify Sync</TabsTrigger>
             </TabsList>
 
             <TabsContent value="orders" className="mt-6">
@@ -170,10 +159,6 @@ export default function Stanley() {
 
             <TabsContent value="suppliers" className="mt-6">
               <AdminSupplierHealth />
-            </TabsContent>
-
-            <TabsContent value="shopify" className="mt-6">
-              <AdminShopifySync />
             </TabsContent>
           </Tabs>
         </div>

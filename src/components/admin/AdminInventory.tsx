@@ -8,7 +8,7 @@ export function AdminInventory() {
                 <CardDescription>Product sourcing and inventory control</CardDescription>
             </CardHeader>
             <CardContent>
-                <p className="text-muted-foreground">Inventory management features coming soon. Connect to Shopify to manage products.</p>
+                <p className="text-muted-foreground">Manage product inventory, stock levels, and supplier integration.</p>
             </CardContent>
         </Card>
     );

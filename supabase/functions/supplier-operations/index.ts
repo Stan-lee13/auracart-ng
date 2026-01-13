@@ -6,7 +6,7 @@ const corsHeaders = {
 };
 
 // Types
-type SupplierType = 'aliexpress' | 'custom';
+type SupplierType = 'aliexpress';
 
 interface SupplierProduct {
   id: string;
@@ -77,7 +77,7 @@ Deno.serve(async (req) => {
         result = await searchProducts(payload.params, payload.suppliers);
         break;
       case 'compareProducts':
-        result = { comparisons: [] }; // Placeholder
+        result = await compareProducts(payload.productIds);
         break;
       case 'getProduct':
         result = await getProduct(payload.productId);
@@ -146,7 +146,7 @@ async function searchAliExpressProducts(params: SupplierSearchParams): Promise<S
       .from('supplier_credentials')
       .select('access_token')
       .eq('supplier_type', 'aliexpress')
-      .single();
+      .maybeSingle();
 
     if (!credentials?.access_token) {
       console.warn('AliExpress not authenticated');
@@ -219,6 +219,190 @@ async function searchAliExpressProducts(params: SupplierSearchParams): Promise<S
 }
 
 async function getProduct(productId: string): Promise<SupplierProduct | null> {
-  // Placeholder - would call AliExpress API
-  return null;
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
+  // Fetch from our database first
+  const { data: product } = await supabase
+    .from('products')
+    .select('*')
+    .eq('id', productId)
+    .single();
+
+  if (!product) return null;
+
+  return {
+    id: product.id,
+    name: product.title,
+    description: product.description || '',
+    price: Number(product.final_price) || 0,
+    currency: 'USD',
+    images: Array.isArray(product.images) ? product.images.map((img: any) => img.url || img) : [],
+    category: product.category || 'General',
+    stock: product.stock_status === 'in_stock' ? 100 : 0,
+    supplierUrl: product.supplier_url || '',
+  };
+}
+
+async function compareProducts(productIds: string[]): Promise<{ comparisons: any[] }> {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
+  // Get AliExpress credentials
+  const { data: credentials } = await supabase
+    .from('supplier_credentials')
+    .select('access_token')
+    .eq('supplier_type', 'aliexpress')
+    .maybeSingle();
+
+  const appKey = Deno.env.get('ALIEXPRESS_APP_KEY');
+  const appSecret = Deno.env.get('ALIEXPRESS_APP_SECRET');
+
+  const comparisons = [];
+
+  for (const productId of productIds) {
+    // Fetch product details from our database
+    const { data: product } = await supabase
+      .from('products')
+      .select('*')
+      .eq('id', productId)
+      .single();
+
+    if (!product) continue;
+
+    let metrics: Record<string, unknown>;
+    let recommendation: Record<string, unknown>;
+
+    if (credentials?.access_token && appKey && appSecret) {
+      try {
+        // Fetch real product details from AliExpress API
+        const timestamp = Date.now().toString();
+        const params: Record<string, string> = {
+          app_key: appKey,
+          method: 'aliexpress.trade.product.query',
+          sign_method: 'sha256',
+          timestamp,
+          v: '2.0',
+          access_token: credentials.access_token,
+          product_id: product.aliexpress_product_id,
+        };
+
+        const signStr = appSecret +
+          Object.keys(params)
+            .sort()
+            .map(key => `${key}${params[key]}`)
+            .join('') +
+          appSecret;
+
+        const encoder = new TextEncoder();
+        const data = encoder.encode(signStr);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const sign = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+
+        params.sign = sign;
+
+        const response = await fetch(`https://api-sg.aliexpress.com/sync?${new URLSearchParams(params).toString()}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        });
+
+        const responseData = await response.json();
+        const result = responseData.aliexpress_trade_product_query_response;
+
+        if (result?.product) {
+          const aeProduct = result.product;
+          const supplierCost = Number(aeProduct.price || product.supplier_cost);
+          const finalPrice = Number(product.final_price);
+          const profitMargin = ((finalPrice - supplierCost) / finalPrice) * 100;
+
+          metrics = {
+            price: finalPrice,
+            supplier_cost: supplierCost,
+            shipping_time: aeProduct.shipping_time || '7-15 days',
+            commission_rate: 0.08,
+            processing_time: aeProduct.processing_time || '1-2 days',
+            availability: aeProduct.stock > 0 ? 'in_stock' : 'out_of_stock',
+            total_cost: supplierCost * 1.1,
+            profit_margin: Math.round(profitMargin * 100) / 100,
+            stock: aeProduct.stock || 0,
+            rating: aeProduct.rating || 4.5,
+            reviews: aeProduct.reviews || 0,
+          };
+
+          // Determine recommendation based on metrics
+          recommendation = {
+            best_price: profitMargin > 15,
+            fastest_shipping: (aeProduct.shipping_time || '').includes('7') || (aeProduct.shipping_time || '').includes('5'),
+            best_overall: profitMargin > 15 && aeProduct.stock > 10,
+            reason: profitMargin > 20 
+              ? 'Excellent profit margin with good availability'
+              : profitMargin > 15
+              ? 'Good profit margin with reasonable availability'
+              : 'Competitive pricing, consider for volume sales',
+          };
+        } else {
+          throw new Error('No product data from AliExpress');
+        }
+      } catch (error) {
+        console.warn(`Failed to fetch AliExpress data for ${productId}, using fallback metrics:`, error);
+        metrics = {
+          price: product.final_price || 0,
+          supplier_cost: product.supplier_cost || 0,
+          shipping_time: '7-15 days',
+          commission_rate: 0.08,
+          processing_time: '1-2 days',
+          availability: product.stock_status || 'in_stock',
+          total_cost: (product.supplier_cost || 0) * 1.1,
+          profit_margin: product.final_price && product.supplier_cost 
+            ? Math.round(((product.final_price - product.supplier_cost) / product.final_price) * 10000) / 100
+            : 15,
+          stock: product.stock_status === 'in_stock' ? 100 : 0,
+          rating: 4.5,
+          reviews: 0,
+        };
+        recommendation = {
+          best_price: true,
+          fastest_shipping: false,
+          best_overall: true,
+          reason: 'Using cached product data (API unavailable)',
+        };
+      }
+    } else {
+      // No AliExpress credentials, use database data
+      const supplierCost = Number(product.supplier_cost);
+      const finalPrice = Number(product.final_price);
+      const profitMargin = supplierCost && finalPrice ? ((finalPrice - supplierCost) / finalPrice) * 100 : 15;
+
+      metrics = {
+        price: finalPrice,
+        supplier_cost: supplierCost,
+        shipping_time: '7-15 days',
+        commission_rate: 0.08,
+        processing_time: '1-2 days',
+        availability: product.stock_status || 'in_stock',
+        total_cost: supplierCost * 1.1,
+        profit_margin: Math.round(profitMargin * 100) / 100,
+        stock: product.stock_status === 'in_stock' ? 100 : 0,
+        rating: 4.5,
+        reviews: 0,
+      };
+      recommendation = {
+        best_price: profitMargin > 15,
+        fastest_shipping: false,
+        best_overall: profitMargin > 15,
+        reason: 'Based on stored product data - connect AliExpress for live metrics',
+      };
+    }
+
+    comparisons.push({
+      product_id: productId,
+      metrics,
+      recommendation,
+    });
+  }
+
+  return { comparisons };
 }

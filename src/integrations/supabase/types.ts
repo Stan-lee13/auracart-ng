@@ -196,7 +196,7 @@ export type Database = {
           order_number: string
           payment_status: string
           shipping_address: Json | null
-          shopify_order_id: string | null
+
           status: string
           total_amount: number
           tracking_number: string | null
@@ -214,7 +214,7 @@ export type Database = {
           order_number: string
           payment_status?: string
           shipping_address?: Json | null
-          shopify_order_id?: string | null
+
           status?: string
           total_amount: number
           tracking_number?: string | null
@@ -232,7 +232,7 @@ export type Database = {
           order_number?: string
           payment_status?: string
           shipping_address?: Json | null
-          shopify_order_id?: string | null
+
           status?: string
           total_amount?: number
           tracking_number?: string | null

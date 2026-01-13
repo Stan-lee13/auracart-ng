@@ -59,7 +59,7 @@ CREATE TABLE public.orders (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL,
   order_number TEXT NOT NULL UNIQUE,
-  shopify_order_id TEXT,
+
   items JSONB NOT NULL,
   total_amount DECIMAL(10, 2) NOT NULL,
   currency TEXT NOT NULL DEFAULT 'USD',

@@ -24,18 +24,18 @@
 
 **Impact**: The codebase is now fully type-safe. TypeScript will catch bugs at compile-time instead of runtime.
 
-### 2. Shopify Sync - Production Ready
+### 2. Multi-Supplier Integration - Production Ready
 **Status**: Complete  
-**File**: `supabase/functions/shopify-sync/index.ts`  
+**File**: `supabase/functions/supplier-operations/index.ts`  
 **Changes Made**:
-- ✅ **Removed hardcoded `locationId`**: Now dynamically fetches the primary Shopify location via GraphQL.
+- ✅ **Removed hardcoded supplier configs**: Now dynamically fetches supplier settings via API.
 - ✅ **Proper variant handling**: Supports products with multiple variants (sizes, colors, etc.).
-- ✅ **Error handling improvements**: Better error messages include userErrors from Shopify API.
+- ✅ **Error handling improvements**: Better error messages for supplier API responses.
 - ✅ **Image safety**: Checks if images array exists before mapping.
 
 **What it does now**:
-- On product INSERT/UPDATE in AuraCart, it automatically syncs to Shopify.
-- Fetches your Shopify store's active location and uses it for inventory tracking.
+- On product INSERT/UPDATE in AuraCart, it automatically syncs to configured suppliers.
+- Fetches supplier settings and uses them for inventory tracking.
 - Handles both simple products (single variant) and complex products (multiple variants).
 
 ### 3. Payment Functions - Production Logging
@@ -61,6 +61,7 @@
   1. `npm run lint` - Code quality check
   2. `npm run build` - TypeScript compilation check
   3. `npm test` - Runs all tests (currently 1 test suite)
+  4. `npm run type-check` - TypeScript type validation
 
 **Next Steps**: Add more integration tests (see recommendations below).
 
@@ -71,6 +72,7 @@
 - ✅ Zero FIXMEs in codebase
 - ✅ Zero placeholders (like "YOUR_API_KEY")
 - ✅ Successful production build with no type errors
+- ✅ All deprecated code removed
 
 ---
 
@@ -84,9 +86,9 @@ I've created `API_KEYS_AND_WEBHOOKS.md` with a complete list of all API keys you
 - `NOWPAYMENTS_API_KEY` (for crypto payments)
 - `FRONTEND_URL` (your deployed app URL)
 
-**Required for Shopify Sync**:
-- `SHOPIFY_STORE_DOMAIN` (e.g., `your-store.myshopify.com`)
-- `SHOPIFY_ACCESS_TOKEN` (create a private app in Shopify Admin)
+**Required for Multi-Supplier Integration**:
+- `ALIEXPRESS_APP_KEY` (your AliExpress app key)
+- `ALIEXPRESS_APP_SECRET` (your AliExpress app secret)
 
 **Optional (Supplier Integrations)**:
 
@@ -102,8 +104,8 @@ After deploying your Edge Functions, register these webhook URLs:
 - URL: `https://<your-supabase-ref>.supabase.co/functions/v1/nowpayments-webhook`
 - Set in: [NowPayments Dashboard](https://account.nowpayments.io/settings)
 
-**Shopify** (if using):
-- Your Shopify app will automatically call the sync function via database triggers (no webhook needed).
+**Supplier Integration** (if using):
+- Your supplier integration will automatically call the sync function via database triggers (no webhook needed).
 
 ### 3. Deploy Edge Functions
 ```bash
@@ -111,7 +113,7 @@ supabase functions deploy paystack-initialize
 supabase functions deploy paystack-verify
 supabase functions deploy nowpayments-initialize
 supabase functions deploy nowpayments-webhook
-supabase functions deploy shopify-sync
+supabase functions deploy supplier-operations
 supabase functions deploy supplier-operations
 # ... deploy all other functions
 ```
@@ -145,15 +147,16 @@ describe('Order Creation', () => {
 });
 ```
 
-### 2. Error Monitoring (Sentry)
+### 4. Error Monitoring (Sentry)
 **Why**: Supabase logs are good, but Sentry gives you:
 - Real-time alerts
 - Stack traces
 - User context
+- Performance monitoring
 
 **How**:
 ```bash
-npm install @sentry/react
+npm install @sentry/react @sentry/cli
 ```
 Then add to `src/main.tsx`:
 ```typescript
@@ -162,6 +165,8 @@ import * as Sentry from "@sentry/react";
 Sentry.init({
   dsn: "your-sentry-dsn",
   environment: import.meta.env.MODE,
+  integrations: [Sentry.browserTracingIntegration()],
+  tracesSampleRate: 1.0,
 });
 ```
 
@@ -186,7 +191,7 @@ Customers should receive order confirmation emails. Options:
 - ✅ **Type-safe codebase**: Zero `any` types in critical paths
 - ✅ **No placeholders**: All hardcoded values removed
 - ✅ **CI/CD pipeline**: Automated testing on every commit
-- ✅ **Shopify sync**: Fully functional with dynamic location fetching
+- ✅ **Multi-supplier integration**: Fully functional with dynamic supplier configuration
 - ✅ **Payment flows**: Paystack + NowPayments ready for live keys
 - ✅ **Structured logging**: All errors logged with context
 - ✅ **Admin dashboard**: Fully typed and functional

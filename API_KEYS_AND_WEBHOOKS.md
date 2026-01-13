@@ -24,14 +24,15 @@ These are usually pre-configured by Supabase, but verify they are available to y
 
 ## 3. E-commerce Integrations
 
-### Shopify Sync
-- **Variable**: `SHOPIFY_STORE_DOMAIN` (e.g., `your-store.myshopify.com`)
-- **Variable**: `SHOPIFY_ACCESS_TOKEN`
+### Multi-Supplier Integration
+- **Variable**: `ALIEXPRESS_APP_KEY`
+- **Variable**: `ALIEXPRESS_APP_SECRET`
+- **Variable**: `ALIEXPRESS_ACCESS_TOKEN`
 - **Where to get it**: 
-  1. Go to Shopify Admin -> Settings -> Apps and sales channels -> Develop apps.
-  2. Create a new app.
-  3. Configure Admin API scopes: `read_products`, `write_products`, `read_inventory`, `write_inventory`, `read_locations`.
-  4. Install the app and reveal the "Admin API access token".
+  1. Go to AliExpress Open Platform -> My Apps.
+  2. Create a new application.
+  3. Configure required permissions for product and order APIs.
+  4. Obtain the credentials from your app dashboard.
 
 ## 4. Suppliers (Dropshipping)
 Configure these based on which suppliers you intend to use.

@@ -40,13 +40,35 @@ export default defineConfig(({ mode }) => ({
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webp}'],
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/.*\.myshopify\.com\/.*/i,
-            handler: 'NetworkFirst',
+            urlPattern: /^https:\/\/.*\/.*(jpe?g|png|webp|gif)$/i,
+            handler: 'CacheFirst',
             options: {
-              cacheName: 'shopify-cache',
+              cacheName: 'image-cache',
               expiration: {
                 maxEntries: 100,
                 maxAgeSeconds: 60 * 60 * 24 * 7 // 7 days
+              }
+            }
+          },
+          {
+            urlPattern: /^https:\/\/.*\/.*\.js$/i,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'js-cache',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 * 24 // 1 day
+              }
+            }
+          },
+          {
+            urlPattern: /^https:\/\/.*\/.*\.css$/i,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'css-cache',
+              expiration: {
+                maxEntries: 30,
+                maxAgeSeconds: 60 * 60 * 24 // 1 day
               }
             }
           }

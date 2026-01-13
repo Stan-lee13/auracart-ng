@@ -8,7 +8,7 @@ $functions = @(
     'admin-login', 'admin-setup', 'admin-verify', 'aliexpress-oauth-callback',
     'auto-fulfill-order', 'check-availability', 'crypto-convert', 'get-recommendations',
     'import-products', 'nowpayments-initialize', 'nowpayments-webhook', 'paystack-initialize',
-    'paystack-verify', 'search-products', 'search-suggest', 'shopify-sync',
+    'paystack-verify', 'search-products', 'search-suggest',
     'supplier-operations', 'sync-inventory', 'sync-prices', 'sync-tracking',
     'track-order', 'update-profile'
 )

@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, ShieldCheck } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 export default function StanleyLogin() {
   const navigate = useNavigate();
@@ -15,6 +16,7 @@ export default function StanleyLogin() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("login");
+  const [assignRole, setAssignRole] = useState(true);
 
   const handleSetup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,7 +36,7 @@ export default function StanleyLogin() {
     try {
       console.log('Attempting admin setup for:', sanitizedUsername);
       const { data, error } = await supabase.functions.invoke('admin-setup', {
-        body: { username: sanitizedUsername, password }
+        body: { username: sanitizedUsername, password, assignRole }
       });
 
       if (error) {
@@ -53,8 +55,23 @@ export default function StanleyLogin() {
       }
 
       if (data.success) {
-        toast.success("Admin account created! You can now log in.");
+        toast.success(data.message ?? "Admin account created.");
+
+        if (assignRole) {
+          if (data.roleAssigned) {
+            toast.success("Admin role assigned to your Supabase profile.");
+          } else if (data.assignRoleAttempted) {
+            toast.warning(data.roleAssignmentMessage ?? "Role assignment attempted but not confirmed.");
+          } else {
+            toast.info(data.roleAssignmentMessage ?? "Role assignment skipped.");
+          }
+        } else {
+          toast.info("Role assignment skipped. You can assign it later via admin login.");
+        }
+
         setActiveTab("login");
+      } else {
+        toast.error(data.message ?? "Admin setup failed.");
       }
     } catch (error: unknown) {
       console.error('Setup catch block:', error);
@@ -96,13 +113,18 @@ export default function StanleyLogin() {
         throw error;
       }
 
-      if (data.success && data.token) {
-        localStorage.setItem('admin_token', data.token);
-        localStorage.setItem('admin_username', data.username);
-        toast.success("Login successful!");
-        navigate('/stanley');
+      if (data.success) {
+        toast.success(data.message ?? "Admin credentials verified.");
+
+        if (data.roleAssigned) {
+          toast.success("Your Supabase profile already has admin access. Proceed to dashboard.");
+        } else {
+          toast.info("Please sign in with your Supabase account so we can confirm admin access.");
+        }
+
+        navigate('/auth');
       } else {
-        toast.error("Invalid credentials");
+        toast.error(data.message ?? "Invalid credentials");
       }
     } catch (error: unknown) {
       console.error('Login catch block:', error);

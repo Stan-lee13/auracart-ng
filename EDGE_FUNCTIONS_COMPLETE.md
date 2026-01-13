@@ -31,7 +31,7 @@
 16. **sync-inventory** - Sync inventory levels
 17. **sync-prices** - Sync product prices
 18. **sync-tracking** - Sync tracking information
-19. **shopify-sync** - Sync with Shopify (if used)
+19. **inventory-sync** - Sync inventory levels
 
 ### 🛠️ UTILITIES (3)
 20. **crypto-convert** - Currency/crypto conversion
@@ -118,7 +118,7 @@ Make sure these are set in your Supabase dashboard:
 - 🔲 ALIEXPRESS_APP_SECRET
 - 🔲 NOWPAYMENTS_API_KEY
 - 🔲 PAYSTACK_SECRET_KEY
-- 🔲 SHOPIFY_ACCESS_TOKEN (if using Shopify sync)
+- 🔲 INVENTORY_SYNC_ENABLED (if using inventory sync)
 
 ---
 

@@ -64,11 +64,73 @@ Deno.serve(async (req) => {
       .select()
       .single();
 
+    // Fetch real-time tracking from AliExpress if available
+    const appKey = Deno.env.get('ALIEXPRESS_APP_KEY');
+    const appSecret = Deno.env.get('ALIEXPRESS_APP_SECRET');
+    let trackingEvents = 0;
+    let currentStatus = order.tracking_status || 'processing';
+
+    if (appKey && appSecret && order.tracking_number) {
+      try {
+        const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+        const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+        const supabase = createClient(supabaseUrl, supabaseKey);
+
+        const { data: credentials } = await supabase
+          .from('supplier_credentials')
+          .select('access_token')
+          .eq('supplier_type', 'aliexpress')
+          .maybeSingle();
+
+        if (credentials?.access_token) {
+          const timestamp = Date.now().toString();
+          const params: Record<string, string> = {
+            app_key: appKey,
+            method: 'aliexpress.trade.logistics.query',
+            sign_method: 'sha256',
+            timestamp,
+            v: '2.0',
+            access_token: credentials.access_token,
+            tracking_number: order.tracking_number,
+          };
+
+          const signStr = appSecret +
+            Object.keys(params)
+              .sort()
+              .map(key => `${key}${params[key]}`)
+              .join('') +
+            appSecret;
+
+          const encoder = new TextEncoder();
+          const data = encoder.encode(signStr);
+          const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+          const hashArray = Array.from(new Uint8Array(hashBuffer));
+          const sign = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+
+          params.sign = sign;
+
+          const response = await fetch(`https://api-sg.aliexpress.com/sync?${new URLSearchParams(params).toString()}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          });
+
+          const responseData = await response.json();
+          const result = responseData.aliexpress_trade_logistics_query_response;
+          if (result?.tracking_status) {
+            currentStatus = result.tracking_status;
+            trackingEvents = result.events?.length || 0;
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to fetch live tracking:', e);
+      }
+    }
+
     // Update order tracking status
     const trackingResult = {
       tracking_updated: true,
-      current_status: order.tracking_status || 'processing',
-      tracking_events: 0,
+      current_status: currentStatus,
+      tracking_events: trackingEvents,
     };
 
     // Update order with sync time

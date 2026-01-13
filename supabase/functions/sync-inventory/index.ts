@@ -95,11 +95,64 @@ async function syncAliExpressInventory(supabase: any) {
 
   for (const product of (products || [])) {
     try {
-      // Update sync status
+      // Fetch real inventory from AliExpress API
+      const appKey = Deno.env.get('ALIEXPRESS_APP_KEY');
+      const appSecret = Deno.env.get('ALIEXPRESS_APP_SECRET');
+
+      if (!appKey || !appSecret) {
+        throw new Error('AliExpress API credentials not configured');
+      }
+
+      const timestamp = Date.now().toString();
+      const params: Record<string, string> = {
+        app_key: appKey,
+        method: 'aliexpress.trade.product.query',
+        sign_method: 'sha256',
+        timestamp,
+        v: '2.0',
+        access_token: credentials.access_token,
+        product_id: product.aliexpress_product_id,
+      };
+
+      const signStr = appSecret +
+        Object.keys(params)
+          .sort()
+          .map(key => `${key}${params[key]}`)
+          .join('') +
+        appSecret;
+
+      const encoder = new TextEncoder();
+      const data = encoder.encode(signStr);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const sign = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+
+      params.sign = sign;
+
+      const response = await fetch(`https://api-sg.aliexpress.com/sync?${new URLSearchParams(params).toString()}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      });
+
+      const responseData = await response.json();
+      const result = responseData.aliexpress_trade_product_query_response;
+
+      let stockStatus = 'out_of_stock';
+      let stockCount = 0;
+
+      if (result?.product) {
+        stockCount = result.product.stock || 0;
+        stockStatus = stockCount > 0 ? 'in_stock' : 'out_of_stock';
+      }
+
+      // Update product with real inventory data
       await supabase
         .from('products')
         .update({
+          stock_status: stockStatus,
           updated_at: new Date().toISOString(),
+          last_sync_at: new Date().toISOString(),
+          sync_status: 'synced',
         })
         .eq('id', product.id);
 

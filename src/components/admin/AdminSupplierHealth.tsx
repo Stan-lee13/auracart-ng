@@ -60,12 +60,27 @@ export default function AdminSupplierHealth() {
             ? 'https://mnuppunshelyjezumqtr.supabase.co/functions/v1/aliexpress-oauth-callback'
             : `${window.location.origin}/api/aliexpress-callback`}`;
 
-        // Note: In production you'd want a more robust redirect mechanism, 
-        // but for now we point directly to the edge function callback.
-
         const oauthUrl = `https://oauth.aliexpress.com/authorize?response_type=code&client_id=${ALIEXPRESS_APP_KEY}&redirect_uri=${encodeURIComponent(redirectUri)}&state=stanley&view=web`;
 
         window.open(oauthUrl, '_blank');
+    };
+
+    const handleSeedTokens = async () => {
+        const accessToken = prompt('Enter AliExpress Access Token (for testing):');
+        if (!accessToken) return;
+
+        try {
+            const response = await supabase.functions.invoke('seed-tokens', {
+                body: { accessToken, refreshToken: null, userId: 'test', userNick: 'test', locale: 'en' }
+            });
+            if (response.error) throw response.error;
+            toast.success('Test tokens seeded successfully');
+            setIsConnected(true);
+            checkHealth();
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : 'Failed to seed tokens';
+            toast.error(message);
+        }
     };
 
     const getStatusColor = (status: string) => {
@@ -120,15 +135,26 @@ export default function AdminSupplierHealth() {
                                         {status.status}
                                     </Badge>
                                     {supplier === 'aliexpress' && (
-                                        <Button
-                                            size="sm"
-                                            variant={isConnected ? "outline" : "default"}
-                                            onClick={handleConnect}
-                                            className="ml-2"
-                                        >
-                                            <ExternalLink className="w-4 h-4 mr-2" />
-                                            {isConnected ? "Reconnect" : "Connect"}
-                                        </Button>
+                                        <>
+                                            <Button
+                                                size="sm"
+                                                variant={isConnected ? "outline" : "default"}
+                                                onClick={handleConnect}
+                                                className="ml-2"
+                                            >
+                                                <ExternalLink className="w-4 h-4 mr-2" />
+                                                {isConnected ? "Reconnect" : "Connect"}
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                onClick={handleSeedTokens}
+                                                className="ml-2"
+                                                title="Seed test tokens for development"
+                                            >
+                                                Seed Tokens
+                                            </Button>
+                                        </>
                                     )}
                                 </div>
                             </div>

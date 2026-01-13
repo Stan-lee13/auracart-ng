@@ -16,14 +16,6 @@ export const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRout
 
   useEffect(() => {
     const checkAdminStatus = async () => {
-      // First check local storage for custom admin token (for "secrecy" mode)
-      const customToken = localStorage.getItem('admin_token');
-      if (customToken) {
-        setIsAdmin(true);
-        setCheckingAdmin(false);
-        return;
-      }
-
       if (!requireAdmin || !user) {
         setCheckingAdmin(false);
         return;
